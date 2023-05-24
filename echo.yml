@@ -1,0 +1,36 @@
+version: "3.7"
+services:
+  mock-oauth2-server:
+    image: ghcr.io/navikt/mock-oauth2-server:0.5.5
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      JSON_CONFIG: '{"interactiveLogin":false}'
+    hostname: host.docker.internal
+  wonderwall:
+    image: ghcr.io/nais/wonderwall:latest
+    depends_on:
+      - mock-oauth2-server
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4000:4000"
+    environment:
+      WONDERWALL_OPENID_CLIENT_ID: "bogus"
+      WONDERWALL_OPENID_CLIENT_JWK: '{"p": "1llCVmIGC8p1xDpUiNHDabYSfueB_RWbBY9u60VNGoMU80DBeoddnjSy_-u8QrjTUvTvoRrshNhXS9fsTESch5fX9cbBwpUJkELO5gpiQ9blSxt77nnfCzZ9Elo_qNvf0AK8c3PKe0vc3LXxjKPScqRbxk42Is4Wlsd7T94HWVs", "kty": "RSA", "q": "1MNIhksjTwLaB6KzBCsZXZszxt8KCZzQNmqyOOeTOaZ8nXTt6SskYmd1ThPGKOdATh9uzY1qwWXtd-ht97AL4FcPqwSiTwEg7Hz7skqAQcQVXJDw1vIr6DQHIlEC6_RrY7d5lpOjHRm2iFE0LSJrqJNOZW1vuIrJtXVeCej7V5U", "d": "lIJTOLSeVDHde8I8MXyAS9ZCCDOprP_0vDAAlXy_Enca1ry3_7kTTry0-BIoUsCfWwN0Gw00H1xsZeS1doI4NiUZ0NDSvRUNe-QJEE30VZ4aLsKCrtYrKajh5as9j29xrcy-mtAe73DQ3lQ1jzOlHmG8cCJxMJyVIWP_ayZg_Bc6AQNhIikiQg5eGXdlXGKRXr55p1HxkSDHcECEHE5SGxP3oO83Xkjae3CsVdtSkEQVStqtNTCV6wH6sGIN5X-kLaPfpDlQt-5p3-gAio5h021Dzxxk5rmDoThHJY__5jNbvH4Knx4Dt4RIVKoeduRuM_UeJ_tXngTJbl-96hNXUQ", "e": "AQAB", "use": "sig","kid": "BYgpsTAgv4bCzcsPKGnRGGIjnfMyCZrZ90D7C7kf1JA", "qi": "BcJ1GZWm-azItJM_QJQ2GgX5lP003GJkUHWJWlmlgiBx0Ehs8Kx1Ofrjf57nD69LTHsXGbVxlUfLrJfM5e85KCDon4NXLZinHyNNJh9T2e6eqDvffDZvTqXMUQa8maWjOzLGREFYxxFBoQdFON2jwfAsVAH2mWZrXccMPejuD9I", "dp": "JUaOf8E6NfC2fDJ8ovJ_njGYk9MkyuNn-xaPfoClwPeMvCTFwM4rnKijfFf9fEjyDxojVgv9l7ibrcfWAwlngzkHyGkRJwqOCDVmD6E8p3mGlIIqEjXFcQi_xWJGcdIS4PSo2xcG3lw6A3Pslr2iimdEwn61cWYPjZcRPblp48M","alg": "RS256", "dq": "sWO0Jwukf66_-9fB67rHZk0NSUUSiFsvGf-xYlJpZIqToXApH9uxdT4PBq7j65yK99erOUQr-t0xtWSbswQbksrjrFGrxbUKL0IxVEBbWPnUWZ4avwugYfRm8kya5AGgO75waIPlXlDe6B7UIsFtA1r15QjuOe21KU6Wvip6zFU",    "n": "siVtpp1EZ_L2ehI8k2XBFOaj5kYgQnhRoEPCXI8HnYQnKZ3WZI-MIWZhuqp39XiODQCC5LnQNU6w4z6DklClDT99zVATtS1l4amP60QHxrur-sYjVjF4zn2mfu6rJ24vdn6hBKueRb2-yhdQzqo5fnZf6o2IrZ-1BNTiv2k2xN1AWl9VEb8hmEgVmOMlgdMDK3NZ4sDPcqg58sNmfdaaZgr-mB9EbCN8SVQdfAuLpUfmr4z2OXKRunfPPhL6ZaW0m2otr3WF05nk7Hu3tbcMrN1uYzm0yJjiF3m9UqFXyaVa6wkK7LtYRAak4UxU_ThBGUKzfjc0yQuEMNJSzd3u9w"}'
+      WONDERWALL_OPENID_WELL_KNOWN_URL: http://host.docker.internal:8080/default/.well-known/openid-configuration
+      WONDERWALL_INGRESS: http://localhost:4000
+      WONDERWALL_BIND_ADDRESS: 0.0.0.0:4000
+      WONDERWALL_UPSTREAM_HOST: upstream:3000
+      WONDERWALL_AUTO_LOGIN: "true"
+      WONDERWALL_LOG_FORMAT: "text"
+    restart: on-failure
+  upstream:
+    image: mendhak/http-https-echo:24
+    ports:
+      - "3000:3000"
+    environment:
+      HTTP_PORT: 3000
+      JWT_HEADER: Authorization
