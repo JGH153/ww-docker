@@ -7,3 +7,5 @@ docker-compose -f echo.yml up
 docker-compose up
 
 docker-compose -f next.yml up
+
+Done
